@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# ode depends on @tangent.to/lina via a file:../ specifier, so CI checks out
+# and builds the lina sibling repo next to it before installing.
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ode
+      - uses: actions/checkout@v4
+        with:
+          repository: tangent-to/lina
+          path: lina
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build lina (produces its dist for the file dependency)
+        run: npm install --no-fund --no-audit
+        working-directory: lina
+      - name: Install and test ode
+        run: |
+          npm install --no-fund --no-audit
+          npm run test:run
+        working-directory: ode
+
+  reference:
+    name: compare against scipy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ode
+      - uses: actions/checkout@v4
+        with:
+          repository: tangent-to/lina
+          path: lina
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: astral-sh/setup-uv@v5
+      - run: npm install --no-fund --no-audit
+        working-directory: lina
+      - run: npm install --no-fund --no-audit
+        working-directory: ode
+      - run: npm run test:scipy
+        working-directory: ode
