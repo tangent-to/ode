@@ -16,7 +16,9 @@ This notebook uses the classic Lotka-Volterra system as a throughline.
 
 // %% [javascript]
 
-import { rk45, solve } from 'https://esm.sh/@tangent.to/ode';
+import * as __lib from 'https://esm.sh/@tangent.to/ode';
+const rk45 = __lib.rk45;
+const solve = __lib.solve;
 
 // The model has two species: prey x and predator y.
 //   x' = a*x - b*x*y   (prey grow, and are eaten on contact)
