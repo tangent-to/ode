@@ -17,7 +17,7 @@ import { makeResult, normalizeState, wrapRhs } from './_util.js';
  * @param {[number, number]} tSpan - [t0, tEnd] (tEnd may be < t0)
  * @param {number|Array<number>} y0 - Initial state
  * @param {Object} options - {step} or {nSteps}
- * @returns {Object} {t, y, success, message, nfev, nsteps}
+ * @returns {{t: number[], y: number[] | number[][], success: boolean, message: string, nfev: number, nsteps: number}} Solver result
  */
 function integrate(stepper, f, tSpan, y0, options = {}) {
   const [t0, tEnd] = tSpan;
@@ -124,7 +124,7 @@ function rk4Step(fn, t, y, h, n) {
  * @param {Object} options
  * @param {number} [options.step] - Fixed step size h > 0 (required unless nSteps given; wins if both)
  * @param {number} [options.nSteps] - Number of equal steps across tSpan
- * @returns {Object} {t, y, success, message, nfev, nsteps}
+ * @returns {{t: number[], y: number[] | number[][], success: boolean, message: string, nfev: number, nsteps: number}} Solver result
  */
 export function euler(f, tSpan, y0, options) {
   return integrate(eulerStep, f, tSpan, y0, options);
@@ -139,7 +139,7 @@ export function euler(f, tSpan, y0, options) {
  * @param {Object} options
  * @param {number} [options.step] - Fixed step size h > 0 (required unless nSteps given; wins if both)
  * @param {number} [options.nSteps] - Number of equal steps across tSpan
- * @returns {Object} {t, y, success, message, nfev, nsteps}
+ * @returns {{t: number[], y: number[] | number[][], success: boolean, message: string, nfev: number, nsteps: number}} Solver result
  */
 export function rk2(f, tSpan, y0, options) {
   return integrate(rk2Step, f, tSpan, y0, options);
@@ -154,7 +154,7 @@ export function rk2(f, tSpan, y0, options) {
  * @param {Object} options
  * @param {number} [options.step] - Fixed step size h > 0 (required unless nSteps given; wins if both)
  * @param {number} [options.nSteps] - Number of equal steps across tSpan
- * @returns {Object} {t, y, success, message, nfev, nsteps}
+ * @returns {{t: number[], y: number[] | number[][], success: boolean, message: string, nfev: number, nsteps: number}} Solver result
  */
 export function rk4(f, tSpan, y0, options) {
   return integrate(rk4Step, f, tSpan, y0, options);
