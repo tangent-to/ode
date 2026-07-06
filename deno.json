@@ -13,6 +13,6 @@
     ]
   },
   "imports": {
-    "@tangent.to/lina": "../lina/src/index.js"
+    "@tangent.to/lina": "jsr:@tangent/lina@^0.1.0"
   }
 }

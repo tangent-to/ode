@@ -138,7 +138,7 @@ function luSolve(fac, b) {
  * @param {number} [options.maxSteps=100000] - Safety cap on accepted+rejected steps
  * @param {Function} [options.jac] - (t, y) => nested n x n Jacobian df/dy; central finite
  *   differences are used when omitted
- * @returns {Object} {t, y, success, message, nfev, njev, nsteps}
+ * @returns {{t: number[], y: number[] | number[][], success: boolean, message: string, nfev: number, njev: number, nsteps: number}} Solver result
  */
 export function rosenbrock(f, tSpan, y0, options = {}) {
   const rtol = options.rtol ?? 1e-6;

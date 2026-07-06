@@ -40,7 +40,7 @@ const ORDER = 4; // error estimator order used for step control
  * @param {number} [options.firstStep] - Initial step size (auto if omitted)
  * @param {number} [options.maxSteps=100000] - Safety cap on accepted+rejected steps
  * @param {Function|Array<Function>} [options.events] - g(t, y) => number; a root marks an event
- * @returns {Object} {t, y, success, message, nfev, nsteps, events?}
+ * @returns {{t: number[], y: number[] | number[][], success: boolean, message: string, nfev: number, nsteps: number, events?: Array<{t: number[], y: number[] | number[][]}>}} Solver result
  */
 export function rk45(f, tSpan, y0, options = {}) {
   const rtol = options.rtol ?? 1e-6;

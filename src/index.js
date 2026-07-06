@@ -28,7 +28,7 @@ import { euler, rk2, rk4 } from './fixed.js';
  * @param {number|Array<number>} y0 - Initial state
  * @param {Object} [options] - {method, ...solver options}
  * @param {string} [options.method='rk45'] - 'rk45' | 'rosenbrock' | 'euler' | 'rk2' | 'rk4'
- * @returns {Object} Solver result {t, y, success, ...}
+ * @returns {{t: number[], y: number[] | number[][], success: boolean, message: string, nfev: number, nsteps: number, njev?: number, events?: Array<{t: number[], y: number[] | number[][]}>}} Solver result (fields depend on the chosen method)
  */
 export function solve(f, tSpan, y0, options = {}) {
   const { method = 'rk45', ...opts } = options;
@@ -40,4 +40,9 @@ export function solve(f, tSpan, y0, options = {}) {
   return solver(f, tSpan, y0, opts);
 }
 
+/**
+ * Convenience bundle of every solver under one object, so consumers can
+ * `import ode from '@tangent.to/ode'` and call `ode.solve(...)`, `ode.rk45(...)`, etc.
+ * @type {{solve: typeof solve, rk45: typeof rk45, rosenbrock: typeof rosenbrock, euler: typeof euler, rk2: typeof rk2, rk4: typeof rk4}}
+ */
 export default { solve, rk45, rosenbrock, euler, rk2, rk4 };
