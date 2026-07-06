@@ -13,16 +13,12 @@ The adaptive Dormand-Prince solver `rk45` matches scipy's RK45 and MATLAB's
 ode45: a 5th-order step with an embedded error estimate, PI step-size control,
 a dense-output interpolant, and bracketed event detection.
 
-This notebook uses the classic Lotka-Volterra system as a throughline. It
-imports the local build. Once the package is published you would import it
-from a CDN instead:
-
-    import { rk45, solve } from 'https://esm.sh/@tangent.to/ode';
+This notebook uses the classic Lotka-Volterra system as a throughline.
 */
 
 // %% [javascript]
 
-import { rk45, solve } from '../dist/index.js';
+import { rk45, solve } from 'https://esm.sh/@tangent.to/ode';
 
 // The model has two species: prey x and predator y.
 //   x' = a*x - b*x*y   (prey grow, and are eaten on contact)
@@ -49,7 +45,8 @@ recurring about every 5.5 time units, with the predator peak trailing it.
 
 const sol = rk45(f, [0, 15], [10, 5]);
 
-const [prey, predator] = sol.y;
+const prey = sol.y[0];
+const predator = sol.y[1];
 
 // Local maxima of a trajectory: a sample larger than both neighbors.
 const peaks = (series) => {
