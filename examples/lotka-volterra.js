@@ -5,8 +5,6 @@
 
 // %% [markdown]
 /*
-# Lotka-Volterra predator-prey dynamics
-
 `@tangent.to/ode` integrates initial value problems of the form
 `y' = f(t, y)`, where the state `y` is a plain array of numbers (or a scalar).
 The adaptive Dormand-Prince solver `rk45` matches scipy's RK45 and MATLAB's
@@ -48,6 +46,14 @@ const sol = rk45(f, [0, 15], [10, 5]);
 const prey = sol.y[0];
 const predator = sol.y[1];
 
+// Reshape the component-major result into row objects for Plot: one entry per
+// sample time, and a long (tidy) form with a `species` column for a legend.
+const series = sol.t.map((t, i) => ({ t, prey: prey[i], predator: predator[i] }));
+const longSeries = series.flatMap((row) => [
+  { t: row.t, species: 'prey', population: row.prey },
+  { t: row.t, species: 'predator', population: row.predator },
+]);
+
 // Local maxima of a trajectory: a sample larger than both neighbors.
 const peaks = (series) => {
   const out = [];
@@ -64,6 +70,47 @@ const peaks = (series) => {
   steps: sol.nsteps,
   preyPeaks: peaks(prey),
   predatorPeaks: peaks(predator),
+});
+
+// %% [markdown]
+/*
+The two populations oscillate out of phase: each predator peak trails the prey
+peak that feeds it. Prey in blue, predators in red.
+*/
+
+// %% [javascript]
+
+Plot.plot({
+  width: 720,
+  height: 320,
+  color: { legend: true, domain: ['prey', 'predator'], range: ['steelblue', 'crimson'] },
+  x: { label: 'time' },
+  y: { label: 'population', grid: true },
+  marks: [
+    Plot.ruleY([0]),
+    Plot.line(longSeries, { x: 't', y: 'population', stroke: 'species' }),
+  ],
+});
+
+// %% [markdown]
+/*
+Plotting prey against predators traces the trajectory in state space: a single
+closed orbit, the signature of the conserved quantity below. The dot marks the
+start `[10, 5]`.
+*/
+
+// %% [javascript]
+
+Plot.plot({
+  width: 480,
+  height: 480,
+  aspectRatio: 1,
+  x: { label: 'prey', grid: true },
+  y: { label: 'predator', grid: true },
+  marks: [
+    Plot.line(series, { x: 'prey', y: 'predator', stroke: 'purple' }),
+    Plot.dot([series[0]], { x: 'prey', y: 'predator', fill: 'black', r: 4 }),
+  ],
 });
 
 // %% [markdown]
@@ -86,10 +133,30 @@ const invariants = prey.map((x, i) => V(x, predator[i]));
 const vMin = Math.min(...invariants);
 const vMax = Math.max(...invariants);
 
+const vSeries = sol.t.map((t, i) => ({ t, V: invariants[i] }));
+
 ({
   V_initial: +invariants[0].toFixed(6),
   V_final: +invariants[invariants.length - 1].toFixed(6),
   spread: vMax - vMin, // ~9e-7: constant to well under 1e-4
+});
+
+// %% [markdown]
+/*
+The invariant `V` along the numerical trajectory: a flat line (note the tiny
+y-axis scale) confirms the orbit closes rather than spiralling.
+*/
+
+// %% [javascript]
+
+Plot.plot({
+  width: 720,
+  height: 260,
+  x: { label: 'time' },
+  y: { label: 'V (conserved)', grid: true },
+  marks: [
+    Plot.line(vSeries, { x: 't', y: 'V', stroke: 'seagreen' }),
+  ],
 });
 
 // %% [markdown]
