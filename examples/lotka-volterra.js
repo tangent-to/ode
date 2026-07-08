@@ -27,7 +27,8 @@ const solve = __lib.solve;
 const a = 1.0, b = 0.1, c = 1.5, d = 0.075;
 const f = (t, [x, y]) => [a * x - b * x * y, -c * y + d * x * y];
 
-f(0, [10, 5]); // [x', y'] at the initial state: [5, -3.75]
+// The derivative at the initial state [10, 5] should be [5, -3.75].
+f(0, [10, 5]);
 
 // %% [markdown]
 /*
