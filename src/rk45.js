@@ -79,6 +79,13 @@ export function rk45(f, tSpan, y0, options = {}) {
 
   const k = Array.from({ length: 7 }, () => new Float64Array(n));
 
+  // Per-step work buffers, allocated once and reused across steps. The
+  // accepted state swaps between `y` and `yNext` by reference; everything
+  // recorded in the output copies values out first.
+  const yi = new Float64Array(n);
+  let yNext = new Float64Array(n);
+  const err = new Float64Array(n);
+
   // Output collection
   const outT = [];
   const outY = [];
@@ -158,7 +165,6 @@ export function rk45(f, tSpan, y0, options = {}) {
     // Compute the 7 stages
     for (let i = 0; i < n; i++) k[0][i] = fEval[i];
     for (let s = 1; s < 7; s++) {
-      const yi = new Float64Array(n);
       for (let i = 0; i < n; i++) {
         let acc = 0;
         for (let j = 0; j < s; j++) acc += A[s][j] * k[j][i];
@@ -170,8 +176,6 @@ export function rk45(f, tSpan, y0, options = {}) {
     }
 
     // 5th-order solution and embedded error
-    const yNext = new Float64Array(n);
-    const err = new Float64Array(n);
     for (let i = 0; i < n; i++) {
       let sol = 0;
       let e = 0;
@@ -189,7 +193,11 @@ export function rk45(f, tSpan, y0, options = {}) {
       // Accept. PI controller.
       const tOld = t;
       const yOld = y;
-      const kk = k.map((ks) => Float64Array.from(ks));
+      // Stage snapshot for the dense-output interpolant; only needed when
+      // tEval points or event functions can look inside the step.
+      const kk = tEval || eventFns.length
+        ? k.map((ks) => Float64Array.from(ks))
+        : null;
       const fNext = fn(t + h, yNext); // FSAL: reused as next k[0]
       nfev++;
 
@@ -209,6 +217,7 @@ export function rk45(f, tSpan, y0, options = {}) {
 
       t = tOld + h;
       y = yNext;
+      yNext = yOld; // recycle the outgoing state buffer for the next attempt
       fEval = fNext;
 
       if (!tEval) {
@@ -217,7 +226,8 @@ export function rk45(f, tSpan, y0, options = {}) {
       }
 
       const factor = errNorm === 0 ? MAX_FACTOR
-        : Math.min(MAX_FACTOR, SAFETY * errNorm ** (-0.7 / ORDER) * errPrev ** (0.4 / ORDER));
+        : Math.min(MAX_FACTOR,
+            SAFETY * errNorm ** (-0.7 / (ORDER + 1)) * errPrev ** (0.4 / (ORDER + 1)));
       errPrev = Math.max(errNorm, 1e-10);
       h = absH * Math.max(MIN_FACTOR, factor) * direction;
     } else {
