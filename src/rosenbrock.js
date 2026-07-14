@@ -20,7 +20,7 @@
  */
 
 import { errorNorm, initialStep, makeResult, normalizeState, wrapRhs } from './_util.js';
-import { lu } from '@tangent.to/lina';
+import { luFactor, luFactorSolve } from '@tangent.to/lina';
 
 // Kaps-Rentrop 4(3), Shampine's parameter set (gamma = 1/2).
 const GAMMA = 1 / 2;
@@ -76,49 +76,37 @@ function fdJacobian(fn, t, y) {
  * LU-factor a nested square matrix once, for repeated triangular solves.
  * Throws if the matrix is singular (a pivot below tolerance).
  *
+ * Uses lina's packed factorization (flat combined-LU storage plus a
+ * permutation vector) so the hot stiff-step path avoids rebuilding nested
+ * L/U and a dense permutation matrix on every attempt. Solve with luSolve().
+ *
  * @param {Array<Array<number>>} W - Nested n x n matrix
- * @returns {{L: Array<Array<number>>, U: Array<Array<number>>, perm: Int32Array}}
+ * @returns {{lu: Float64Array, perm: Int32Array, n: number}}
  */
 function factorize(W) {
-  const n = W.length;
-  const { L, U, P } = lu(W);
+  const fac = luFactor(W);
+  const { lu: a, n } = fac;
   let maxU = 0;
   for (let i = 0; i < n; i++) {
-    for (let j = i; j < n; j++) maxU = Math.max(maxU, Math.abs(U[i][j]));
+    for (let j = i; j < n; j++) maxU = Math.max(maxU, Math.abs(a[i * n + j]));
   }
-  const perm = new Int32Array(n);
   for (let i = 0; i < n; i++) {
-    perm[i] = P[i].indexOf(1);
-    if (!(Math.abs(U[i][i]) > 1e-13 * maxU)) {
+    if (!(Math.abs(a[i * n + i]) > 1e-13 * maxU)) {
       throw new Error('rosenbrock: W = I/(gamma*h) - J is singular');
     }
   }
-  return { L, U, perm };
+  return fac;
 }
 
 /**
- * Solve L U x = P b using a factorization from factorize().
+ * Solve L U x = P b using a packed factorization from factorize().
  *
- * @param {{L: Array<Array<number>>, U: Array<Array<number>>, perm: Int32Array}} fac
+ * @param {{lu: Float64Array, perm: Int32Array, n: number}} fac
  * @param {Float64Array} b - Right-hand side (not modified)
  * @returns {Float64Array}
  */
 function luSolve(fac, b) {
-  const { L, U, perm } = fac;
-  const n = b.length;
-  const x = new Float64Array(n);
-  for (let i = 0; i < n; i++) x[i] = b[perm[i]];
-  for (let i = 1; i < n; i++) {
-    let s = x[i];
-    for (let j = 0; j < i; j++) s -= L[i][j] * x[j];
-    x[i] = s;
-  }
-  for (let i = n - 1; i >= 0; i--) {
-    let s = x[i];
-    for (let j = i + 1; j < n; j++) s -= U[i][j] * x[j];
-    x[i] = s / U[i][i];
-  }
-  return x;
+  return luFactorSolve(fac, b);
 }
 
 /**
