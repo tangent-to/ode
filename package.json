@@ -1,6 +1,6 @@
 {
   "name": "@tangent.to/ode",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "ODE integration for JavaScript (ESM): adaptive Dormand-Prince RK45, stiff Rosenbrock, dense output, event detection. scipy.integrate-validated.",
   "type": "module",
   "main": "./dist/index.js",
